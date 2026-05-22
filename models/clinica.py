@@ -48,5 +48,8 @@ class Clinica:
     def horario_fechamento(self, horario_fechamento: time):
         self.__horario_fechamento = horario_fechamento
 
-    def esta_em_funcionamento(self, horario_inicio: time, horario_fim: time):
-        return (self.__horario_abertura <= horario_inicio and horario_fim <= self.__horario_fechamento and horario_inicio < horario_fim)   
+    def esta_em_funcionamento(self, horario: time):
+        return (self.__horario_abertura <= horario <= self.__horario_fechamento)
+
+    #def esta_em_funcionamento(self, horario_inicio: time, horario_fim: time):
+    #    return (self.__horario_abertura <= horario_inicio and horario_fim <= self.__horario_fechamento and horario_inicio < horario_fim)   
