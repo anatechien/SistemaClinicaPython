@@ -1,8 +1,13 @@
 from abc import ABC
 from datetime import date
 
-from atendimento import Atendimento
 from paciente import Paciente
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from atendimento import Atendimento
+        
 
 
 class Pagamento(ABC):
@@ -11,7 +16,7 @@ class Pagamento(ABC):
     def __init__(
             self,
             data_pagamento: date,
-            atendimento: Atendimento,
+            atendimento: 'Atendimento',
             paciente: Paciente,
             valor_pago: float
             
@@ -49,7 +54,7 @@ class Pagamento(ABC):
     def valor_pago(self, valor_pago: float):
         self.__valor_pago = valor_pago
 
-    def calcular_valor__restante(self):
+    def calcular_valor_restante(self):
         total = self.__atendimento.calcular_valor_total()
               
         total_pago = 0
@@ -64,7 +69,7 @@ class PagamentoPix(Pagamento):
     def __init__(
         self,
         data_pagamento: date,
-        atendimento: Atendimento,
+        atendimento: 'Atendimento',
         paciente: Paciente,
         valor_pago: float,
         cpf_pagador: str
@@ -91,7 +96,7 @@ class PagamentoDinheiro(Pagamento):
     def __init__(
         self,
         data_pagamento,
-        atendimento,
+        atendimento: 'Atendimento',
         paciente,
         valor_pago
     ):
@@ -106,7 +111,7 @@ class PagamentoCartaoCredito(Pagamento):
     def __init__(
         self,
         data_pagamento,
-        atendimento,
+        atendimento: 'Atendimento',
         paciente,
         valor_pago,
         numero_cartao: str,

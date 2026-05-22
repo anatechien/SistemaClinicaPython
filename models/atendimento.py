@@ -1,11 +1,16 @@
 from datetime import datetime
 
+
 from paciente import Paciente
 from profissional import ProfissionalSaude
 from clinica import Clinica
 from tipo_atendimento import TipoAtendimento
 from procedimento import Procedimento
-from pagamento import Pagamento
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pagamento import Pagamento
 
 
 class Atendimento:
@@ -85,7 +90,7 @@ class Atendimento:
     def adicionar_procedimento(self, procedimento: Procedimento):
         self.__procedimentos.append(procedimento)
 
-    def adicionar_pagamento(self, pagamento: Pagamento):
+    def adicionar_pagamento(self, pagamento: 'Pagamento'):
         self.__pagamentos.append(pagamento)
 
     def calcular_valor_total(self):
