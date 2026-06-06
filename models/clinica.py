@@ -2,11 +2,14 @@ from datetime import time
 
 class Clinica:
     def __init__(self, nome: str, cidade: str,  descricao: str, horario_abertura: time, horario_fechamento: time):
+        if horario_abertura >= horario_fechamento:
+            raise ValueError("O horário de abertura deve ser anterior ao horário de fechamento.")
         self.__nome = nome
         self.__cidade = cidade
         self.__descricao = descricao
         self.__horario_abertura = horario_abertura
         self.__horario_fechamento = horario_fechamento
+        self.__atendimentos = []
 
     @property
     def nome(self):
@@ -46,6 +49,25 @@ class Clinica:
 
     @horario_fechamento.setter
     def horario_fechamento(self, horario_fechamento: time):
+        self.__horario_fechamento = horario_fechamento
+
+    @property
+    def atendimentos(self):
+        return self.__atendimentos
+
+    def adicionar_atendimento(self, atendimento):
+        self.__atendimentos.append(atendimento)
+
+    def remover_atendimento(self, atendimento):
+        self.__atendimentos.remove(atendimento)
+
+    def atualizar(self, nome: str, cidade: str, descricao: str, horario_abertura: time, horario_fechamento: time):
+        if horario_abertura >= horario_fechamento:
+            raise ValueError("O horário de abertura deve ser anterior ao horário de fechamento.")
+        self.__nome = nome
+        self.__cidade = cidade
+        self.__descricao = descricao
+        self.__horario_abertura = horario_abertura
         self.__horario_fechamento = horario_fechamento
 
     def esta_em_funcionamento(self, horario_inicio: time, horario_fim: time):

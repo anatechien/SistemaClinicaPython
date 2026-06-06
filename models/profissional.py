@@ -1,4 +1,4 @@
-from pessoa import Pessoa
+from models.pessoa import Pessoa
 
 class ProfissionalSaude(Pessoa):
     def __init__(self, nome: str, celular: str, cpf:  str, especialidade: str, registro_profissional: str):
@@ -21,3 +21,9 @@ class ProfissionalSaude(Pessoa):
     @registro_profissional.setter
     def registro_profissional(self, registro_profissional: str):
         self.__registro_profissional = registro_profissional
+
+    def atualizar(self, nome: str, celular: str, especialidade: str, registro_profissional: str):
+        self.nome = nome
+        self.celular = celular
+        self.especialidade = especialidade
+        self.registro_profissional = registro_profissional

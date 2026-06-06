@@ -18,3 +18,10 @@ class TipoAtendimento:
     @descricao.setter
     def descricao(self, descricao: str):
         self.__descricao = descricao
+
+    def atualizar(self, nome: str, descricao: str):
+        self.__nome = nome
+        self.__descricao = descricao
+
+    def __str__(self):
+        return self.__nome
