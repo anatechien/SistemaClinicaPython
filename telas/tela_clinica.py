@@ -8,8 +8,9 @@ class TelaClinica(TelaAbstrata):
     print("1 - Incluir Clínica")
     print("2 - Alterar Clínica")
     print("3 - Listar Clínicas")
+    print("4 - Excluir Clínica")
     print("0 - Retornar")
-    return self.le_num_inteiro("Escolha a opção: ", [0, 1, 2, 3])
+    return self.le_num_inteiro("Escolha a opção: ", [0, 1, 2, 3, 4])
 
   def pega_dados_clinica(self, nome_disponivel=None):
     print("-------- DADOS CLÍNICA ----------")

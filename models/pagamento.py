@@ -1,13 +1,24 @@
 from datetime import date
 
+from exceptions.pagamento_dados_invalidos_exception import PagamentoDadosInvalidosException
+from exceptions.pagamento_fora_do_prazo_exception import PagamentoForaDoPrazoException
 from models.atendimento import Atendimento
 from models.paciente import Paciente
+
+
+def validar_data_pagamento(data_pagamento: date, atendimento: Atendimento):
+  if data_pagamento > atendimento.data:
+    raise PagamentoForaDoPrazoException(
+      data_pagamento.strftime("%d/%m/%Y"),
+      atendimento.data.strftime("%d/%m/%Y"),
+    )
 
 
 class Pagamento:
   def __init__(self, data: date, atendimento: Atendimento, paciente: Paciente, valor: float):
     if valor <= 0:
       raise ValueError("O valor do pagamento deve ser maior que zero.")
+    validar_data_pagamento(data, atendimento)
 
     self.__data = data
     self.__atendimento = atendimento
@@ -31,6 +42,19 @@ class Pagamento:
   def valor(self):
     return self.__valor
 
+  def _validar_atualizacao(self, data: date, valor: float):
+    if valor <= 0:
+      raise ValueError("O valor do pagamento deve ser maior que zero.")
+    validar_data_pagamento(data, self.__atendimento)
+    total_sem_este = self.__atendimento.total_pago() - self.__valor
+    if total_sem_este + valor > self.__atendimento.valor:
+      raise ValueError("Valor do pagamento excede o valor restante do atendimento.")
+
+  def atualizar(self, data: date, valor: float):
+    self._validar_atualizacao(data, valor)
+    self.__data = data
+    self.__valor = valor
+
 
 class PagamentoDinheiro(Pagamento):
   def __str__(self):
@@ -46,12 +70,20 @@ class PagamentoPix(Pagamento):
     valor: float,
     cpf_pagador: str,
   ):
+    if not cpf_pagador.strip():
+      raise PagamentoDadosInvalidosException("CPF do pagador é obrigatório para pagamento via PIX.")
     super().__init__(data, atendimento, paciente, valor)
-    self.__cpf_pagador = cpf_pagador
+    self.__cpf_pagador = cpf_pagador.strip()
 
   @property
   def cpf_pagador(self):
     return self.__cpf_pagador
+
+  def atualizar(self, data: date, valor: float, cpf_pagador: str):
+    if not cpf_pagador.strip():
+      raise PagamentoDadosInvalidosException("CPF do pagador é obrigatório para pagamento via PIX.")
+    super().atualizar(data, valor)
+    self.__cpf_pagador = cpf_pagador.strip()
 
   def __str__(self):
     return (
@@ -70,9 +102,17 @@ class PagamentoCartaoCredito(Pagamento):
     numero_cartao: str,
     bandeira: str,
   ):
+    if not numero_cartao.strip():
+      raise PagamentoDadosInvalidosException(
+        "Número do cartão é obrigatório para pagamento com cartão de crédito."
+      )
+    if not bandeira.strip():
+      raise PagamentoDadosInvalidosException(
+        "Bandeira é obrigatória para pagamento com cartão de crédito."
+      )
     super().__init__(data, atendimento, paciente, valor)
-    self.__numero_cartao = numero_cartao
-    self.__bandeira = bandeira
+    self.__numero_cartao = numero_cartao.strip()
+    self.__bandeira = bandeira.strip()
 
   @property
   def numero_cartao(self):
@@ -81,6 +121,19 @@ class PagamentoCartaoCredito(Pagamento):
   @property
   def bandeira(self):
     return self.__bandeira
+
+  def atualizar(self, data: date, valor: float, numero_cartao: str, bandeira: str):
+    if not numero_cartao.strip():
+      raise PagamentoDadosInvalidosException(
+        "Número do cartão é obrigatório para pagamento com cartão de crédito."
+      )
+    if not bandeira.strip():
+      raise PagamentoDadosInvalidosException(
+        "Bandeira é obrigatória para pagamento com cartão de crédito."
+      )
+    super().atualizar(data, valor)
+    self.__numero_cartao = numero_cartao.strip()
+    self.__bandeira = bandeira.strip()
 
   def __str__(self):
     return (

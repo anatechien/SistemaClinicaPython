@@ -84,6 +84,29 @@ class ControladorClinica:
     for codigo, clinica in enumerate(self.__clinicas, start=1):
       self.__tela_clinica.mostra_clinica(self._dados_clinica(codigo, clinica))
 
+  def excluir_clinica(self):
+    if not self.__clinicas:
+      self.__tela_clinica.mostra_mensagem("ATENCAO: Nenhuma clínica cadastrada.")
+      return
+
+    self.lista_clinicas()
+    codigo = self.__tela_clinica.seleciona_clinica(len(self.__clinicas))
+    clinica = self.pega_clinica_por_codigo(codigo)
+
+    if clinica is None:
+      self.__tela_clinica.mostra_mensagem("ATENCAO: Clínica não existente.")
+      return
+
+    if clinica.atendimentos:
+      self.__tela_clinica.mostra_mensagem(
+        "ATENCAO: Não é possível excluir clínica com atendimentos cadastrados."
+      )
+      return
+
+    self.__clinicas.remove(clinica)
+    self.__tela_clinica.mostra_mensagem("Clínica excluída com sucesso!")
+    self.lista_clinicas()
+
   def retornar(self):
     self.__controlador_sistema.abre_tela()
 
@@ -92,6 +115,7 @@ class ControladorClinica:
       1: self.incluir_clinica,
       2: self.alterar_clinica,
       3: self.lista_clinicas,
+      4: self.excluir_clinica,
       0: self.retornar,
     }
 

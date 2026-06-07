@@ -1,7 +1,15 @@
-from datetime import date, datetime
+from abc import ABC, abstractmethod
+from datetime import datetime
+
+from exceptions.paciente_menor_idade_exception import PacienteMenorDeIdadeException
+from models.paciente import validar_maior_idade
 
 
-class TelaAbstrata:
+class TelaAbstrata(ABC):
+  @abstractmethod
+  def tela_opcoes(self):
+    pass
+
   def le_num_inteiro(self, mensagem=" ", ints_validos=None):
     while True:
       valor_lido = input(mensagem)
@@ -57,9 +65,11 @@ class TelaAbstrata:
   ):
     while True:
       data = self.le_data(mensagem)
-      if self._calcular_idade(data) >= 18:
+      try:
+        validar_maior_idade(data)
         return data
-      print("Paciente deve ser maior de 18 anos. Tente novamente.")
+      except PacienteMenorDeIdadeException as erro:
+        print(erro)
 
   def le_horario(self, mensagem=" "):
     while True:
@@ -90,13 +100,6 @@ class TelaAbstrata:
       if validador is None or validador(horario_inicio, horario_fim):
         return horario_inicio, horario_fim
       print("Atendimento fora do horário de funcionamento da clínica. Tente novamente.")
-
-  def _calcular_idade(self, data_nascimento: date):
-    hoje = date.today()
-    idade = hoje.year - data_nascimento.year
-    if (hoje.month, hoje.day) < (data_nascimento.month, data_nascimento.day):
-      idade -= 1
-    return idade
 
   def mostra_mensagem(self, msg):
     print(msg)

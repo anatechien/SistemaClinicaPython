@@ -1,3 +1,4 @@
+from exceptions.paciente_menor_idade_exception import PacienteMenorDeIdadeException
 from exceptions.paciente_repetido_exception import PacienteRepetidoException
 from telas.tela_paciente import TelaPaciente
 from models.paciente import Paciente
@@ -27,18 +28,26 @@ class ControladorPacientes:
       "data_nascimento": paciente.data_nascimento.strftime("%d/%m/%Y"),
     }
 
+  def _garantir_cpf_disponivel(self, cpf: str, cpf_atual: str = None):
+    if self.pega_paciente_por_cpf(cpf) is not None and cpf != cpf_atual:
+      raise PacienteRepetidoException(cpf)
+
   def incluir_paciente(self):
-    dados = self.__tela_paciente.pega_dados_paciente(
-      cpf_disponivel=lambda cpf: self.pega_paciente_por_cpf(cpf) is None
-    )
-    paciente = Paciente(
-      dados["nome"],
-      dados["celular"],
-      dados["cpf"],
-      dados["data_nascimento"],
-    )
-    self.__pacientes.append(paciente)
-    self.__tela_paciente.mostra_mensagem("Paciente cadastrado com sucesso!")
+    while True:
+      dados = self.__tela_paciente.pega_dados_paciente()
+      try:
+        self._garantir_cpf_disponivel(dados["cpf"])
+        paciente = Paciente(
+          dados["nome"],
+          dados["celular"],
+          dados["cpf"],
+          dados["data_nascimento"],
+        )
+        self.__pacientes.append(paciente)
+        self.__tela_paciente.mostra_mensagem("Paciente cadastrado com sucesso!")
+        break
+      except (PacienteRepetidoException, PacienteMenorDeIdadeException) as erro:
+        self.__tela_paciente.mostra_mensagem(f"ATENCAO: {erro}")
 
   def alterar_paciente(self):
     if not self.__pacientes:
@@ -53,17 +62,19 @@ class ControladorPacientes:
         break
       self.__tela_paciente.mostra_mensagem("ATENCAO: Paciente não existente. Tente novamente.")
 
-    dados = self.__tela_paciente.pega_dados_paciente(
-      cpf_disponivel=lambda novo_cpf: (
-        novo_cpf == paciente.cpf or self.pega_paciente_por_cpf(novo_cpf) is None
-      )
-    )
-    paciente.atualizar(
-      dados["nome"],
-      dados["celular"],
-      dados["data_nascimento"],
-    )
-    self.lista_pacientes()
+    while True:
+      dados = self.__tela_paciente.pega_dados_paciente()
+      try:
+        self._garantir_cpf_disponivel(dados["cpf"], paciente.cpf)
+        paciente.atualizar(
+          dados["nome"],
+          dados["celular"],
+          dados["data_nascimento"],
+        )
+        self.lista_pacientes()
+        break
+      except (PacienteRepetidoException, PacienteMenorDeIdadeException) as erro:
+        self.__tela_paciente.mostra_mensagem(f"ATENCAO: {erro}")
 
   def lista_pacientes(self):
     if not self.__pacientes:

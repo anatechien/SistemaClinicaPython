@@ -1,3 +1,4 @@
+from exceptions.profissional_repetido_exception import ProfissionalRepetidoException
 from telas.tela_profissional import TelaProfissional
 from models.profissional import ProfissionalSaude
 
@@ -27,19 +28,27 @@ class ControladorProfissionais:
       "registro_profissional": profissional.registro_profissional,
     }
 
+  def _garantir_cpf_disponivel(self, cpf: str, cpf_atual: str = None):
+    if self.pega_profissional_por_cpf(cpf) is not None and cpf != cpf_atual:
+      raise ProfissionalRepetidoException(cpf)
+
   def incluir_profissional(self):
-    dados = self.__tela_profissional.pega_dados_profissional(
-      cpf_disponivel=lambda cpf: self.pega_profissional_por_cpf(cpf) is None
-    )
-    profissional = ProfissionalSaude(
-      dados["nome"],
-      dados["celular"],
-      dados["cpf"],
-      dados["especialidade"],
-      dados["registro_profissional"],
-    )
-    self.__profissionais.append(profissional)
-    self.__tela_profissional.mostra_mensagem("Profissional cadastrado com sucesso!")
+    while True:
+      dados = self.__tela_profissional.pega_dados_profissional()
+      try:
+        self._garantir_cpf_disponivel(dados["cpf"])
+        profissional = ProfissionalSaude(
+          dados["nome"],
+          dados["celular"],
+          dados["cpf"],
+          dados["especialidade"],
+          dados["registro_profissional"],
+        )
+        self.__profissionais.append(profissional)
+        self.__tela_profissional.mostra_mensagem("Profissional cadastrado com sucesso!")
+        break
+      except ProfissionalRepetidoException as erro:
+        self.__tela_profissional.mostra_mensagem(f"ATENCAO: {erro}")
 
   def alterar_profissional(self):
     if not self.__profissionais:
@@ -54,18 +63,20 @@ class ControladorProfissionais:
         break
       self.__tela_profissional.mostra_mensagem("ATENCAO: Profissional não existente. Tente novamente.")
 
-    dados = self.__tela_profissional.pega_dados_profissional(
-      cpf_disponivel=lambda novo_cpf: (
-        novo_cpf == profissional.cpf or self.pega_profissional_por_cpf(novo_cpf) is None
-      )
-    )
-    profissional.atualizar(
-      dados["nome"],
-      dados["celular"],
-      dados["especialidade"],
-      dados["registro_profissional"],
-    )
-    self.lista_profissionais()
+    while True:
+      dados = self.__tela_profissional.pega_dados_profissional()
+      try:
+        self._garantir_cpf_disponivel(dados["cpf"], profissional.cpf)
+        profissional.atualizar(
+          dados["nome"],
+          dados["celular"],
+          dados["especialidade"],
+          dados["registro_profissional"],
+        )
+        self.lista_profissionais()
+        break
+      except ProfissionalRepetidoException as erro:
+        self.__tela_profissional.mostra_mensagem(f"ATENCAO: {erro}")
 
   def lista_profissionais(self):
     if not self.__profissionais:

@@ -1,3 +1,4 @@
+from exceptions.tipo_atendimento_repetido_exception import TipoAtendimentoRepetidoException
 from telas.tela_tipo_atendimento import TelaTipoAtendimento
 from models.tipo_atendimento import TipoAtendimento
 
@@ -21,13 +22,21 @@ class ControladorTiposAtendimento:
   def _dados_tipo(self, tipo: TipoAtendimento):
     return {"nome": tipo.nome, "descricao": tipo.descricao}
 
+  def _garantir_nome_disponivel(self, nome: str, nome_atual: str = None):
+    if self.pega_tipo_por_nome(nome) is not None and nome != nome_atual:
+      raise TipoAtendimentoRepetidoException(nome)
+
   def incluir_tipo(self):
-    dados = self.__tela_tipo.pega_dados_tipo(
-      nome_disponivel=lambda nome: self.pega_tipo_por_nome(nome) is None
-    )
-    tipo = TipoAtendimento(dados["nome"], dados["descricao"])
-    self.__tipos.append(tipo)
-    self.__tela_tipo.mostra_mensagem("Tipo de atendimento cadastrado com sucesso!")
+    while True:
+      dados = self.__tela_tipo.pega_dados_tipo()
+      try:
+        self._garantir_nome_disponivel(dados["nome"])
+        tipo = TipoAtendimento(dados["nome"], dados["descricao"])
+        self.__tipos.append(tipo)
+        self.__tela_tipo.mostra_mensagem("Tipo de atendimento cadastrado com sucesso!")
+        break
+      except TipoAtendimentoRepetidoException as erro:
+        self.__tela_tipo.mostra_mensagem(f"ATENCAO: {erro}")
 
   def alterar_tipo(self):
     if not self.__tipos:
@@ -42,13 +51,15 @@ class ControladorTiposAtendimento:
         break
       self.__tela_tipo.mostra_mensagem("ATENCAO: Tipo de atendimento não existente. Tente novamente.")
 
-    dados = self.__tela_tipo.pega_dados_tipo(
-      nome_disponivel=lambda novo_nome: (
-        novo_nome == tipo.nome or self.pega_tipo_por_nome(novo_nome) is None
-      )
-    )
-    tipo.atualizar(dados["nome"], dados["descricao"])
-    self.lista_tipos()
+    while True:
+      dados = self.__tela_tipo.pega_dados_tipo()
+      try:
+        self._garantir_nome_disponivel(dados["nome"], tipo.nome)
+        tipo.atualizar(dados["nome"], dados["descricao"])
+        self.lista_tipos()
+        break
+      except TipoAtendimentoRepetidoException as erro:
+        self.__tela_tipo.mostra_mensagem(f"ATENCAO: {erro}")
 
   def lista_tipos(self):
     if not self.__tipos:
