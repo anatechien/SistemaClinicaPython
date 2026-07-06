@@ -5,20 +5,41 @@ class TelaAtendimento(TelaAbstrata):
   def tela_opcoes(self):
     print("-------- ATENDIMENTOS ----------")
     print("Escolha a opção")
+    print("1 - Cadastro de Atendimento")
+    print("2 - Procedimentos")
+    print("3 - Pagamentos")
+    print("0 - Retornar")
+    return self.le_num_inteiro("Escolha a opção: ", [0, 1, 2, 3])
+
+  def tela_opcoes_cadastro_atendimento(self):
+    print("-------- CADASTRO DE ATENDIMENTO ----------")
+    print("Escolha a opção")
     print("1 - Incluir Atendimento")
     print("2 - Listar Atendimentos")
     print("3 - Alterar Atendimento")
     print("4 - Excluir Atendimento")
-    print("5 - Adicionar Procedimento")
-    print("6 - Listar Procedimentos")
-    print("7 - Alterar Procedimento")
-    print("8 - Excluir Procedimento")
-    print("9 - Registrar Pagamento")
-    print("10 - Listar Pagamentos")
-    print("11 - Alterar Pagamento")
-    print("12 - Excluir Pagamento")
     print("0 - Retornar")
-    return self.le_num_inteiro("Escolha a opção: ", list(range(0, 13)))
+    return self.le_num_inteiro("Escolha a opção: ", [0, 1, 2, 3, 4])
+
+  def tela_opcoes_procedimento(self):
+    print("-------- PROCEDIMENTOS ----------")
+    print("Escolha a opção")
+    print("1 - Adicionar Procedimento")
+    print("2 - Listar Procedimentos")
+    print("3 - Alterar Procedimento")
+    print("4 - Excluir Procedimento")
+    print("0 - Retornar")
+    return self.le_num_inteiro("Escolha a opção: ", [0, 1, 2, 3, 4])
+
+  def tela_opcoes_pagamento(self):
+    print("-------- PAGAMENTOS ----------")
+    print("Escolha a opção")
+    print("1 - Registrar Pagamento")
+    print("2 - Listar Pagamentos")
+    print("3 - Alterar Pagamento")
+    print("4 - Excluir Pagamento")
+    print("0 - Retornar")
+    return self.le_num_inteiro("Escolha a opção: ", [0, 1, 2, 3, 4])
 
   def pega_dados_atendimento(
     self,

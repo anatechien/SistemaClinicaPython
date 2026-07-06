@@ -8,14 +8,17 @@ from telas.tela_sistema import TelaSistema
 
 
 class ControladorSistema:
-  def __init__(self):
-    self.__controlador_clinica = ControladorClinica(self)
-    self.__controlador_pacientes = ControladorPacientes(self)
-    self.__controlador_profissionais = ControladorProfissionais(self)
-    self.__controlador_tipos_atendimento = ControladorTiposAtendimento(self)
-    self.__controlador_atendimentos = ControladorAtendimentos(self)
-    self.__controlador_relatorios = ControladorRelatorios(self)
-    self.__tela_sistema = TelaSistema()
+  def __init__(self, telas=None):
+    telas = telas or {}
+    self.__tela_sistema = telas.get("sistema", TelaSistema())
+    self.__controlador_clinica = ControladorClinica(self, telas.get("clinica"))
+    self.__controlador_pacientes = ControladorPacientes(self, telas.get("paciente"))
+    self.__controlador_profissionais = ControladorProfissionais(self, telas.get("profissional"))
+    self.__controlador_tipos_atendimento = ControladorTiposAtendimento(
+      self, telas.get("tipo_atendimento")
+    )
+    self.__controlador_atendimentos = ControladorAtendimentos(self, telas.get("atendimento"))
+    self.__controlador_relatorios = ControladorRelatorios(self, telas.get("relatorio"))
 
   @property
   def controlador_clinica(self):

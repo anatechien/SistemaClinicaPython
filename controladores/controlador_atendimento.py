@@ -13,9 +13,9 @@ from models.procedimento import Procedimento
 
 
 class ControladorAtendimentos:
-  def __init__(self, controlador_sistema):
+  def __init__(self, controlador_sistema, tela=None):
     self.__controlador_sistema = controlador_sistema
-    self.__tela_atendimento = TelaAtendimento()
+    self.__tela_atendimento = tela or TelaAtendimento()
 
   def _todos_atendimentos(self):
     atendimentos = []
@@ -36,6 +36,8 @@ class ControladorAtendimentos:
       return None, None
     self.lista_atendimentos()
     codigo = self.__tela_atendimento.seleciona_atendimento(len(atendimentos))
+    if codigo is None:
+      return None, None
     return codigo, self.pega_atendimento_por_codigo(codigo)
 
   def _dados_atendimento(self, codigo: int, atendimento: Atendimento):
@@ -77,6 +79,8 @@ class ControladorAtendimentos:
       return None
     self.lista_procedimentos_do_atendimento(atendimento)
     indice = self.__tela_atendimento.seleciona_procedimento(len(atendimento.procedimentos))
+    if indice is None:
+      return None
     return atendimento.procedimentos[indice - 1]
 
   def _selecionar_pagamento(self, atendimento):
@@ -85,6 +89,8 @@ class ControladorAtendimentos:
       return None
     self.lista_pagamentos_do_atendimento(atendimento)
     indice = self.__tela_atendimento.seleciona_pagamento(len(atendimento.pagamentos))
+    if indice is None:
+      return None
     return atendimento.pagamentos[indice - 1]
 
   def _modalidade_pagamento(self, pagamento: Pagamento):
@@ -151,6 +157,8 @@ class ControladorAtendimentos:
 
     self.__controlador_sistema.controlador_clinica.lista_clinicas()
     codigo_clinica = self.__tela_atendimento.seleciona_clinica(len(clinicas))
+    if codigo_clinica is None:
+      return
     clinica = self.__controlador_sistema.controlador_clinica.pega_clinica_por_codigo(codigo_clinica)
 
     self.__controlador_sistema.controlador_pacientes.lista_pacientes()
@@ -170,6 +178,8 @@ class ControladorAtendimentos:
         ),
         validar_horario_clinica=lambda inicio, fim: clinica.esta_em_funcionamento(inicio, fim),
       )
+      if dados is None:
+        return
       try:
         paciente = self.__controlador_sistema.controlador_pacientes.pega_paciente_por_cpf(
           dados["cpf_paciente"]
@@ -217,6 +227,8 @@ class ControladorAtendimentos:
         ),
         validar_horario_clinica=lambda inicio, fim: clinica.esta_em_funcionamento(inicio, fim),
       )
+      if dados is None:
+        return
       try:
         tipo = self.__controlador_sistema.controlador_tipos_atendimento.pega_tipo_por_nome(
           dados["nome_tipo"]
@@ -253,6 +265,8 @@ class ControladorAtendimentos:
           self.__controlador_sistema.controlador_profissionais.pega_profissional_por_cpf(cpf) is not None
         )
       )
+      if dados is None:
+        return
       profissional = self.__controlador_sistema.controlador_profissionais.pega_profissional_por_cpf(
         dados["cpf_profissional"]
       )
@@ -293,6 +307,8 @@ class ControladorAtendimentos:
             self.__controlador_sistema.controlador_profissionais.pega_profissional_por_cpf(cpf) is not None
           )
         )
+        if dados is None:
+          return
         profissional = self.__controlador_sistema.controlador_profissionais.pega_profissional_por_cpf(
           dados["cpf_profissional"]
         )
@@ -343,6 +359,8 @@ class ControladorAtendimentos:
         atendimento.valor_restante(),
         atendimento.data,
       )
+      if dados is None:
+        return
       try:
         pagamento = self._criar_pagamento(dados, atendimento)
         self.__tela_atendimento.mostra_mensagem(f"Pagamento registrado: {pagamento}")
@@ -386,6 +404,8 @@ class ControladorAtendimentos:
         valor_maximo,
         atendimento.data,
       )
+      if dados is None:
+        return
       try:
         self._atualizar_pagamento(pagamento, dados)
         self.__tela_atendimento.mostra_mensagem(f"Pagamento alterado: {pagamento}")
@@ -420,22 +440,54 @@ class ControladorAtendimentos:
   def retornar(self):
     self.__controlador_sistema.abre_tela()
 
-  def abre_tela(self):
+  def _abre_menu_cadastro_atendimento(self):
     lista_opcoes = {
       1: self.incluir_atendimento,
       2: self.lista_atendimentos,
       3: self.alterar_atendimento,
       4: self.excluir_atendimento,
-      5: self.adicionar_procedimento,
-      6: self.lista_procedimentos,
-      7: self.alterar_procedimento,
-      8: self.excluir_procedimento,
-      9: self.registrar_pagamento,
-      10: self.lista_pagamentos,
-      11: self.alterar_pagamento,
-      12: self.excluir_pagamento,
-      0: self.retornar,
     }
-
     while True:
-      lista_opcoes[self.__tela_atendimento.tela_opcoes()]()
+      opcao = self.__tela_atendimento.tela_opcoes_cadastro_atendimento()
+      if opcao == 0:
+        return
+      lista_opcoes[opcao]()
+
+  def _abre_menu_procedimentos(self):
+    lista_opcoes = {
+      1: self.adicionar_procedimento,
+      2: self.lista_procedimentos,
+      3: self.alterar_procedimento,
+      4: self.excluir_procedimento,
+    }
+    while True:
+      opcao = self.__tela_atendimento.tela_opcoes_procedimento()
+      if opcao == 0:
+        return
+      lista_opcoes[opcao]()
+
+  def _abre_menu_pagamentos(self):
+    lista_opcoes = {
+      1: self.registrar_pagamento,
+      2: self.lista_pagamentos,
+      3: self.alterar_pagamento,
+      4: self.excluir_pagamento,
+    }
+    while True:
+      opcao = self.__tela_atendimento.tela_opcoes_pagamento()
+      if opcao == 0:
+        return
+      lista_opcoes[opcao]()
+
+  def abre_tela(self):
+    while True:
+      opcao = self.__tela_atendimento.tela_opcoes()
+      if opcao == 0:
+        self.retornar()
+        return
+      if opcao == 1:
+        self._abre_menu_cadastro_atendimento()
+      elif opcao == 2:
+        self._abre_menu_procedimentos()
+      elif opcao == 3:
+        self._abre_menu_pagamentos()

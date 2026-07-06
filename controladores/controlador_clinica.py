@@ -3,9 +3,9 @@ from models.clinica import Clinica
 
 
 class ControladorClinica:
-  def __init__(self, controlador_sistema):
+  def __init__(self, controlador_sistema, tela=None):
     self.__clinicas = []
-    self.__tela_clinica = TelaClinica()
+    self.__tela_clinica = tela or TelaClinica()
     self.__controlador_sistema = controlador_sistema
 
   @property
@@ -40,6 +40,8 @@ class ControladorClinica:
     dados = self.__tela_clinica.pega_dados_clinica(
       nome_disponivel=lambda nome: self.pega_clinica_por_nome(nome) is None
     )
+    if dados is None:
+      return
     clinica = Clinica(
       dados["nome"],
       dados["cidade"],
@@ -57,6 +59,8 @@ class ControladorClinica:
 
     self.lista_clinicas()
     codigo = self.__tela_clinica.seleciona_clinica(len(self.__clinicas))
+    if codigo is None:
+      return
     clinica = self.pega_clinica_por_codigo(codigo)
 
     if clinica is None:
@@ -68,6 +72,8 @@ class ControladorClinica:
         nome == clinica.nome or self.pega_clinica_por_nome(nome) is None
       )
     )
+    if dados is None:
+      return
     clinica.atualizar(
       dados["nome"],
       dados["cidade"],
@@ -91,6 +97,8 @@ class ControladorClinica:
 
     self.lista_clinicas()
     codigo = self.__tela_clinica.seleciona_clinica(len(self.__clinicas))
+    if codigo is None:
+      return
     clinica = self.pega_clinica_por_codigo(codigo)
 
     if clinica is None:

@@ -5,9 +5,9 @@ from models.paciente import Paciente
 
 
 class ControladorPacientes:
-  def __init__(self, controlador_sistema):
+  def __init__(self, controlador_sistema, tela=None):
     self.__pacientes = []
-    self.__tela_paciente = TelaPaciente()
+    self.__tela_paciente = tela or TelaPaciente()
     self.__controlador_sistema = controlador_sistema
 
   @property
@@ -35,6 +35,8 @@ class ControladorPacientes:
   def incluir_paciente(self):
     while True:
       dados = self.__tela_paciente.pega_dados_paciente()
+      if dados is None:
+        return
       try:
         self._garantir_cpf_disponivel(dados["cpf"])
         paciente = Paciente(
@@ -57,6 +59,8 @@ class ControladorPacientes:
     while True:
       self.lista_pacientes()
       cpf = self.__tela_paciente.seleciona_paciente()
+      if cpf is None:
+        return
       paciente = self.pega_paciente_por_cpf(cpf)
       if paciente is not None:
         break
@@ -64,6 +68,8 @@ class ControladorPacientes:
 
     while True:
       dados = self.__tela_paciente.pega_dados_paciente()
+      if dados is None:
+        return
       try:
         self._garantir_cpf_disponivel(dados["cpf"], paciente.cpf)
         paciente.atualizar(
@@ -91,6 +97,8 @@ class ControladorPacientes:
     while True:
       self.lista_pacientes()
       cpf = self.__tela_paciente.seleciona_paciente()
+      if cpf is None:
+        return
       paciente = self.pega_paciente_por_cpf(cpf)
       if paciente is not None:
         self.__pacientes.remove(paciente)

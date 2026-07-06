@@ -4,9 +4,9 @@ from models.profissional import ProfissionalSaude
 
 
 class ControladorProfissionais:
-  def __init__(self, controlador_sistema):
+  def __init__(self, controlador_sistema, tela=None):
     self.__profissionais = []
-    self.__tela_profissional = TelaProfissional()
+    self.__tela_profissional = tela or TelaProfissional()
     self.__controlador_sistema = controlador_sistema
 
   @property
@@ -35,6 +35,8 @@ class ControladorProfissionais:
   def incluir_profissional(self):
     while True:
       dados = self.__tela_profissional.pega_dados_profissional()
+      if dados is None:
+        return
       try:
         self._garantir_cpf_disponivel(dados["cpf"])
         profissional = ProfissionalSaude(
@@ -58,6 +60,8 @@ class ControladorProfissionais:
     while True:
       self.lista_profissionais()
       cpf = self.__tela_profissional.seleciona_profissional()
+      if cpf is None:
+        return
       profissional = self.pega_profissional_por_cpf(cpf)
       if profissional is not None:
         break
@@ -65,6 +69,8 @@ class ControladorProfissionais:
 
     while True:
       dados = self.__tela_profissional.pega_dados_profissional()
+      if dados is None:
+        return
       try:
         self._garantir_cpf_disponivel(dados["cpf"], profissional.cpf)
         profissional.atualizar(
@@ -93,6 +99,8 @@ class ControladorProfissionais:
     while True:
       self.lista_profissionais()
       cpf = self.__tela_profissional.seleciona_profissional()
+      if cpf is None:
+        return
       profissional = self.pega_profissional_por_cpf(cpf)
       if profissional is not None:
         self.__profissionais.remove(profissional)

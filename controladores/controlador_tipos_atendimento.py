@@ -4,9 +4,9 @@ from models.tipo_atendimento import TipoAtendimento
 
 
 class ControladorTiposAtendimento:
-  def __init__(self, controlador_sistema):
+  def __init__(self, controlador_sistema, tela=None):
     self.__tipos = []
-    self.__tela_tipo = TelaTipoAtendimento()
+    self.__tela_tipo = tela or TelaTipoAtendimento()
     self.__controlador_sistema = controlador_sistema
 
   @property
@@ -29,6 +29,8 @@ class ControladorTiposAtendimento:
   def incluir_tipo(self):
     while True:
       dados = self.__tela_tipo.pega_dados_tipo()
+      if dados is None:
+        return
       try:
         self._garantir_nome_disponivel(dados["nome"])
         tipo = TipoAtendimento(dados["nome"], dados["descricao"])
@@ -46,6 +48,8 @@ class ControladorTiposAtendimento:
     while True:
       self.lista_tipos()
       nome = self.__tela_tipo.seleciona_tipo()
+      if nome is None:
+        return
       tipo = self.pega_tipo_por_nome(nome)
       if tipo is not None:
         break
@@ -53,6 +57,8 @@ class ControladorTiposAtendimento:
 
     while True:
       dados = self.__tela_tipo.pega_dados_tipo()
+      if dados is None:
+        return
       try:
         self._garantir_nome_disponivel(dados["nome"], tipo.nome)
         tipo.atualizar(dados["nome"], dados["descricao"])
@@ -76,6 +82,8 @@ class ControladorTiposAtendimento:
     while True:
       self.lista_tipos()
       nome = self.__tela_tipo.seleciona_tipo()
+      if nome is None:
+        return
       tipo = self.pega_tipo_por_nome(nome)
       if tipo is not None:
         self.__tipos.remove(tipo)

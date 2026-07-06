@@ -4,9 +4,9 @@ from telas.tela_relatorio import TelaRelatorio
 
 
 class ControladorRelatorios:
-  def __init__(self, controlador_sistema):
+  def __init__(self, controlador_sistema, tela=None):
     self.__controlador_sistema = controlador_sistema
-    self.__tela_relatorio = TelaRelatorio()
+    self.__tela_relatorio = tela or TelaRelatorio()
 
   def _dados_atendimento(self, atendimento):
     return {
