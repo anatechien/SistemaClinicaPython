@@ -200,6 +200,7 @@ class ControladorAtendimentos:
           tipo,
           dados["valor"],
         )
+        self.__controlador_sistema.controlador_clinica.atualizar_persistencia()
         self.__tela_atendimento.mostra_mensagem("Atendimento agendado com sucesso!")
         self.lista_atendimentos()
         break
@@ -240,6 +241,7 @@ class ControladorAtendimentos:
           tipo,
           dados["valor"],
         )
+        self.__controlador_sistema.controlador_clinica.atualizar_persistencia()
         self.__tela_atendimento.mostra_mensagem("Atendimento alterado com sucesso!")
         self.lista_atendimentos()
         break
@@ -251,6 +253,7 @@ class ControladorAtendimentos:
     if atendimento is None:
       return
     atendimento.clinica.remover_atendimento(atendimento)
+    self.__controlador_sistema.controlador_clinica.atualizar_persistencia()
     self.lista_atendimentos()
 
   def adicionar_procedimento(self):
@@ -272,6 +275,7 @@ class ControladorAtendimentos:
       )
       procedimento = Procedimento(dados["descricao"], dados["custo"], profissional)
       atendimento.adicionar_procedimento(procedimento)
+      self.__controlador_sistema.controlador_clinica.atualizar_persistencia()
       self.__tela_atendimento.mostra_mensagem(
         f"Procedimento adicionado. Valor total: R$ {atendimento.valor:.2f}"
       )
@@ -318,6 +322,7 @@ class ControladorAtendimentos:
           dados["custo"],
           profissional,
         )
+        self.__controlador_sistema.controlador_clinica.atualizar_persistencia()
         self.__tela_atendimento.mostra_mensagem(
           f"Procedimento alterado. Valor total: R$ {atendimento.valor:.2f}"
         )
@@ -341,6 +346,7 @@ class ControladorAtendimentos:
       return
 
     atendimento.remover_procedimento(procedimento)
+    self.__controlador_sistema.controlador_clinica.atualizar_persistencia()
     self.__tela_atendimento.mostra_mensagem("Procedimento excluído com sucesso!")
 
   def lista_procedimentos_do_atendimento(self, atendimento):
@@ -363,6 +369,7 @@ class ControladorAtendimentos:
         return
       try:
         pagamento = self._criar_pagamento(dados, atendimento)
+        self.__controlador_sistema.controlador_clinica.atualizar_persistencia()
         self.__tela_atendimento.mostra_mensagem(f"Pagamento registrado: {pagamento}")
         self.__tela_atendimento.mostra_mensagem(
           f"Total pago: R$ {atendimento.total_pago():.2f} | "
@@ -408,6 +415,7 @@ class ControladorAtendimentos:
         return
       try:
         self._atualizar_pagamento(pagamento, dados)
+        self.__controlador_sistema.controlador_clinica.atualizar_persistencia()
         self.__tela_atendimento.mostra_mensagem(f"Pagamento alterado: {pagamento}")
         self.__tela_atendimento.mostra_mensagem(
           f"Total pago: R$ {atendimento.total_pago():.2f} | "
@@ -431,6 +439,7 @@ class ControladorAtendimentos:
       return
 
     atendimento.remover_pagamento(pagamento)
+    self.__controlador_sistema.controlador_clinica.atualizar_persistencia()
     self.__tela_atendimento.mostra_mensagem("Pagamento excluído com sucesso!")
 
   def lista_pagamentos_do_atendimento(self, atendimento):

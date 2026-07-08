@@ -1,23 +1,20 @@
 from exceptions.tipo_atendimento_repetido_exception import TipoAtendimentoRepetidoException
 from telas.tela_tipo_atendimento import TelaTipoAtendimento
 from models.tipo_atendimento import TipoAtendimento
-
+from daos.tipo_atendimento_dao import TipoAtendimentoDAO
 
 class ControladorTiposAtendimento:
   def __init__(self, controlador_sistema, tela=None):
-    self.__tipos = []
+    self.__tipo_atendimento_dao = TipoAtendimentoDAO()
     self.__tela_tipo = tela or TelaTipoAtendimento()
     self.__controlador_sistema = controlador_sistema
 
   @property
   def tipos(self):
-    return self.__tipos
+    return self.__tipo_atendimento_dao.get_all()
 
   def pega_tipo_por_nome(self, nome: str):
-    for tipo in self.__tipos:
-      if tipo.nome == nome:
-        return tipo
-    return None
+    return self.__tipo_atendimento_dao.get(nome)
 
   def _dados_tipo(self, tipo: TipoAtendimento):
     return {"nome": tipo.nome, "descricao": tipo.descricao}
@@ -34,14 +31,14 @@ class ControladorTiposAtendimento:
       try:
         self._garantir_nome_disponivel(dados["nome"])
         tipo = TipoAtendimento(dados["nome"], dados["descricao"])
-        self.__tipos.append(tipo)
+        self.__tipo_atendimento_dao.add(tipo.nome, tipo)
         self.__tela_tipo.mostra_mensagem("Tipo de atendimento cadastrado com sucesso!")
         break
       except TipoAtendimentoRepetidoException as erro:
         self.__tela_tipo.mostra_mensagem(f"ATENCAO: {erro}")
 
   def alterar_tipo(self):
-    if not self.__tipos:
+    if not self.tipos:
       self.__tela_tipo.mostra_mensagem("ATENCAO: Nenhum tipo de atendimento cadastrado.")
       return
 
@@ -51,31 +48,36 @@ class ControladorTiposAtendimento:
       if nome is None:
         return
       tipo = self.pega_tipo_por_nome(nome)
-      if tipo is not None:
-        break
-      self.__tela_tipo.mostra_mensagem("ATENCAO: Tipo de atendimento não existente. Tente novamente.")
+      if tipo is None:
+        self.__tela_tipo.mostra_mensagem("ATENCAO: Tipo de atendimento não existente. Tente novamente.")
+        continue
 
-    while True:
       dados = self.__tela_tipo.pega_dados_tipo()
       if dados is None:
         return
       try:
         self._garantir_nome_disponivel(dados["nome"], tipo.nome)
+        nome_antigo = tipo.nome
         tipo.atualizar(dados["nome"], dados["descricao"])
+        if dados["nome"] != nome_antigo:
+          self.__tipo_atendimento_dao.remove(nome_antigo)
+          self.__tipo_atendimento_dao.add(tipo.nome, tipo)
+        else:
+          self.__tipo_atendimento_dao.update()
         self.lista_tipos()
         break
       except TipoAtendimentoRepetidoException as erro:
         self.__tela_tipo.mostra_mensagem(f"ATENCAO: {erro}")
 
   def lista_tipos(self):
-    if not self.__tipos:
+    if not self.tipos:
       self.__tela_tipo.mostra_mensagem("ATENCAO: Nenhum tipo de atendimento cadastrado.")
       return
-    for tipo in self.__tipos:
+    for tipo in self.tipos:
       self.__tela_tipo.mostra_tipo(self._dados_tipo(tipo))
 
   def excluir_tipo(self):
-    if not self.__tipos:
+    if not self.tipos:
       self.__tela_tipo.mostra_mensagem("ATENCAO: Nenhum tipo de atendimento cadastrado.")
       return
 
@@ -86,7 +88,7 @@ class ControladorTiposAtendimento:
         return
       tipo = self.pega_tipo_por_nome(nome)
       if tipo is not None:
-        self.__tipos.remove(tipo)
+        self.__tipo_atendimento_dao.remove(tipo.nome)
         self.lista_tipos()
         return
       self.__tela_tipo.mostra_mensagem("ATENCAO: Tipo de atendimento não existente. Tente novamente.")
@@ -102,6 +104,6 @@ class ControladorTiposAtendimento:
       4: self.excluir_tipo,
       0: self.retornar,
     }
-
     while True:
-      lista_opcoes[self.__tela_tipo.tela_opcoes()]()
+      opcao = self.__tela_tipo.tela_opcoes()
+      lista_opcoes[opcao]()

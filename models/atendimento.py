@@ -1,9 +1,7 @@
 from datetime import date, time
-
 from models.paciente import Paciente, validar_maior_idade
 from models.profissional import ProfissionalSaude
 from models.tipo_atendimento import TipoAtendimento
-
 
 class Atendimento:
   def __init__(
@@ -20,7 +18,9 @@ class Atendimento:
     self.__validar_horarios(clinica, horario_inicio, horario_fim)
     if valor < 0:
       raise ValueError("O valor do atendimento não pode ser negativo.")
-    validar_maior_idade(paciente.data_nascimento, data)
+    
+    possui_responsavel = bool(getattr(paciente, 'responsavel', None))
+    validar_maior_idade(paciente.data_nascimento, data, possui_responsavel=possui_responsavel)
 
     self.__clinica = clinica
     self.__paciente = paciente
@@ -39,7 +39,7 @@ class Atendimento:
     if horario_inicio >= horario_fim:
       raise ValueError("O horário de início deve ser anterior ao horário de fim.")
     if not clinica.esta_em_funcionamento(horario_inicio, horario_fim):
-      raise ValueError("Atendimento fora do horário de funcionamento da clínica.")
+      raise ValueError("O horário do atendimento está fora do horário de funcionamento da clínica.")
 
   @property
   def clinica(self):
@@ -70,6 +70,10 @@ class Atendimento:
     return self.__tipo_atendimento
 
   @property
+  def valor_base(self):
+    return self.__valor_base
+
+  @property
   def valor(self):
     return self.__valor
 
@@ -86,6 +90,10 @@ class Atendimento:
     self.__valor += procedimento.custo
 
   def remover_procedimento(self, procedimento):
+    if self.valor_restante() - procedimento.custo < 0:
+      raise ValueError(
+        "Remoção inviável: o valor total ficaria menor que o total já pago."
+      )
     self.__procedimentos.remove(procedimento)
     self.__valor -= procedimento.custo
 
@@ -131,7 +139,9 @@ class Atendimento:
     self.__validar_horarios(self.__clinica, horario_inicio, horario_fim)
     if valor_base < 0:
       raise ValueError("O valor do atendimento não pode ser negativo.")
-    validar_maior_idade(self.__paciente.data_nascimento, data)
+    
+    possui_responsavel = bool(getattr(self.__paciente, 'responsavel', None))
+    validar_maior_idade(self.__paciente.data_nascimento, data, possui_responsavel=possui_responsavel)
 
     custo_procedimentos = sum(procedimento.custo for procedimento in self.__procedimentos)
     self.__data = data

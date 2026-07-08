@@ -1,23 +1,20 @@
 from exceptions.profissional_repetido_exception import ProfissionalRepetidoException
 from telas.tela_profissional import TelaProfissional
 from models.profissional import ProfissionalSaude
-
+from daos.profissional_dao import ProfissionalDAO
 
 class ControladorProfissionais:
   def __init__(self, controlador_sistema, tela=None):
-    self.__profissionais = []
+    self.__profissional_dao = ProfissionalDAO()
     self.__tela_profissional = tela or TelaProfissional()
     self.__controlador_sistema = controlador_sistema
 
   @property
   def profissionais(self):
-    return self.__profissionais
+    return self.__profissional_dao.get_all()
 
   def pega_profissional_por_cpf(self, cpf: str):
-    for profissional in self.__profissionais:
-      if profissional.cpf == cpf:
-        return profissional
-    return None
+    return self.__profissional_dao.get(cpf)
 
   def _dados_profissional(self, profissional: ProfissionalSaude):
     return {
@@ -46,14 +43,14 @@ class ControladorProfissionais:
           dados["especialidade"],
           dados["registro_profissional"],
         )
-        self.__profissionais.append(profissional)
+        self.__profissional_dao.add(profissional.cpf, profissional)
         self.__tela_profissional.mostra_mensagem("Profissional cadastrado com sucesso!")
         break
       except ProfissionalRepetidoException as erro:
         self.__tela_profissional.mostra_mensagem(f"ATENCAO: {erro}")
 
   def alterar_profissional(self):
-    if not self.__profissionais:
+    if not self.profissionais:
       self.__tela_profissional.mostra_mensagem("ATENCAO: Nenhum profissional cadastrado.")
       return
 
@@ -63,36 +60,42 @@ class ControladorProfissionais:
       if cpf is None:
         return
       profissional = self.pega_profissional_por_cpf(cpf)
-      if profissional is not None:
-        break
-      self.__tela_profissional.mostra_mensagem("ATENCAO: Profissional não existente. Tente novamente.")
+      if profissional is None:
+        self.__tela_profissional.mostra_mensagem("ATENCAO: Profissional não existente. Tente novamente.")
+        continue
 
-    while True:
       dados = self.__tela_profissional.pega_dados_profissional()
       if dados is None:
         return
       try:
         self._garantir_cpf_disponivel(dados["cpf"], profissional.cpf)
+        cpf_antigo = profissional.cpf
         profissional.atualizar(
           dados["nome"],
           dados["celular"],
           dados["especialidade"],
           dados["registro_profissional"],
         )
+        if dados["cpf"] != cpf_antigo:
+          profissional.cpf = dados["cpf"]
+          self.__profissional_dao.remove(cpf_antigo)
+          self.__profissional_dao.add(profissional.cpf, profissional)
+        else:
+          self.__profissional_dao.update()
         self.lista_profissionais()
         break
       except ProfissionalRepetidoException as erro:
         self.__tela_profissional.mostra_mensagem(f"ATENCAO: {erro}")
 
   def lista_profissionais(self):
-    if not self.__profissionais:
+    if not self.profissionais:
       self.__tela_profissional.mostra_mensagem("ATENCAO: Nenhum profissional cadastrado.")
       return
-    for profissional in self.__profissionais:
+    for profissional in self.profissionais:
       self.__tela_profissional.mostra_profissional(self._dados_profissional(profissional))
 
   def excluir_profissional(self):
-    if not self.__profissionais:
+    if not self.profissionais:
       self.__tela_profissional.mostra_mensagem("ATENCAO: Nenhum profissional cadastrado.")
       return
 
@@ -103,7 +106,7 @@ class ControladorProfissionais:
         return
       profissional = self.pega_profissional_por_cpf(cpf)
       if profissional is not None:
-        self.__profissionais.remove(profissional)
+        self.__profissional_dao.remove(profissional.cpf)
         self.lista_profissionais()
         return
       self.__tela_profissional.mostra_mensagem("ATENCAO: Profissional não existente. Tente novamente.")
@@ -119,6 +122,6 @@ class ControladorProfissionais:
       4: self.excluir_profissional,
       0: self.retornar,
     }
-
     while True:
-      lista_opcoes[self.__tela_profissional.tela_opcoes()]()
+      opcao = self.__tela_profissional.tela_opcoes()
+      lista_opcoes[opcao]()

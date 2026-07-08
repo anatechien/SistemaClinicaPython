@@ -2,27 +2,25 @@ from exceptions.paciente_menor_idade_exception import PacienteMenorDeIdadeExcept
 from exceptions.paciente_repetido_exception import PacienteRepetidoException
 from telas.tela_paciente import TelaPaciente
 from models.paciente import Paciente
-
+from daos.paciente_dao import PacienteDAO
 
 class ControladorPacientes:
   def __init__(self, controlador_sistema, tela=None):
-    self.__pacientes = []
+    self.__paciente_dao = PacienteDAO()
     self.__tela_paciente = tela or TelaPaciente()
     self.__controlador_sistema = controlador_sistema
 
   @property
   def pacientes(self):
-    return self.__pacientes
+    return self.__paciente_dao.get_all()
 
   def pega_paciente_por_cpf(self, cpf: str):
-    for paciente in self.__pacientes:
-      if paciente.cpf == cpf:
-        return paciente
-    return None
+    return self.__paciente_dao.get(cpf)
 
   def _dados_paciente(self, paciente: Paciente):
+    responsavel_str = f" (Acomp.: {paciente.responsavel})" if paciente.responsavel else ""
     return {
-      "nome": paciente.nome,
+      "nome": paciente.nome + responsavel_str,
       "celular": paciente.celular,
       "cpf": paciente.cpf,
       "data_nascimento": paciente.data_nascimento.strftime("%d/%m/%Y"),
@@ -39,20 +37,48 @@ class ControladorPacientes:
         return
       try:
         self._garantir_cpf_disponivel(dados["cpf"])
-        paciente = Paciente(
-          dados["nome"],
-          dados["celular"],
-          dados["cpf"],
-          dados["data_nascimento"],
-        )
-        self.__pacientes.append(paciente)
-        self.__tela_paciente.mostra_mensagem("Paciente cadastrado com sucesso!")
-        break
+        
+        responsavel = dados.get("responsavel", None)
+        
+        try:
+          paciente = Paciente(
+            dados["nome"],
+            dados["celular"],
+            dados["cpf"],
+            dados["data_nascimento"],
+            responsavel=responsavel
+          )
+          self.__paciente_dao.add(paciente.cpf, paciente)
+          self.__tela_paciente.mostra_mensagem("Paciente cadastrado com sucesso!")
+          break
+        except PacienteMenorDeIdadeException:
+          self.__tela_paciente.mostra_mensagem("AVISO: Paciente menor de idade necessita de um adulto responsável!")
+          
+          if hasattr(self.__tela_paciente, 'pega_responsavel'):
+            resp = self.__tela_paciente.pega_responsavel()
+          else:
+            resp = dados.get("responsavel")
+          
+          if resp:
+            paciente = Paciente(
+              dados["nome"],
+              dados["celular"],
+              dados["cpf"],
+              dados["data_nascimento"],
+              responsavel=resp
+            )
+            self.__paciente_dao.add(paciente.cpf, paciente)
+            self.__tela_paciente.mostra_mensagem("Paciente menor cadastrado com sucesso acompanhado de responsável!")
+            break
+          else:
+            self.__tela_paciente.mostra_mensagem("Cadastro cancelado por falta de responsável legal.")
+            break
+            
       except (PacienteRepetidoException, PacienteMenorDeIdadeException) as erro:
         self.__tela_paciente.mostra_mensagem(f"ATENCAO: {erro}")
 
   def alterar_paciente(self):
-    if not self.__pacientes:
+    if not self.pacientes:
       self.__tela_paciente.mostra_mensagem("ATENCAO: Nenhum paciente cadastrado.")
       return
 
@@ -62,35 +88,46 @@ class ControladorPacientes:
       if cpf is None:
         return
       paciente = self.pega_paciente_por_cpf(cpf)
-      if paciente is not None:
-        break
-      self.__tela_paciente.mostra_mensagem("ATENCAO: Paciente não existente. Tente novamente.")
+      if paciente is None:
+        self.__tela_paciente.mostra_mensagem("ATENCAO: Paciente não existente. Tente novamente.")
+        continue
 
-    while True:
       dados = self.__tela_paciente.pega_dados_paciente()
       if dados is None:
         return
       try:
         self._garantir_cpf_disponivel(dados["cpf"], paciente.cpf)
+        responsavel = dados.get("responsavel", paciente.responsavel)
+        
+        cpf_antigo = paciente.cpf
         paciente.atualizar(
           dados["nome"],
           dados["celular"],
           dados["data_nascimento"],
+          responsavel=responsavel
         )
+        
+        if dados["cpf"] != cpf_antigo:
+          paciente.cpf = dados["cpf"]
+          self.__paciente_dao.remove(cpf_antigo)
+          self.__paciente_dao.add(paciente.cpf, paciente)
+        else:
+          self.__paciente_dao.update()
+          
         self.lista_pacientes()
         break
       except (PacienteRepetidoException, PacienteMenorDeIdadeException) as erro:
         self.__tela_paciente.mostra_mensagem(f"ATENCAO: {erro}")
 
   def lista_pacientes(self):
-    if not self.__pacientes:
+    if not self.pacientes:
       self.__tela_paciente.mostra_mensagem("ATENCAO: Nenhum paciente cadastrado.")
       return
-    for paciente in self.__pacientes:
+    for paciente in self.pacientes:
       self.__tela_paciente.mostra_paciente(self._dados_paciente(paciente))
 
   def excluir_paciente(self):
-    if not self.__pacientes:
+    if not self.pacientes:
       self.__tela_paciente.mostra_mensagem("ATENCAO: Nenhum paciente cadastrado.")
       return
 
@@ -101,7 +138,7 @@ class ControladorPacientes:
         return
       paciente = self.pega_paciente_por_cpf(cpf)
       if paciente is not None:
-        self.__pacientes.remove(paciente)
+        self.__paciente_dao.remove(paciente.cpf)
         self.lista_pacientes()
         return
       self.__tela_paciente.mostra_mensagem("ATENCAO: Paciente não existente. Tente novamente.")
@@ -117,6 +154,6 @@ class ControladorPacientes:
       4: self.excluir_paciente,
       0: self.retornar,
     }
-
     while True:
-      lista_opcoes[self.__tela_paciente.tela_opcoes()]()
+      opcao = self.__tela_paciente.tela_opcoes()
+      lista_opcoes[opcao]()

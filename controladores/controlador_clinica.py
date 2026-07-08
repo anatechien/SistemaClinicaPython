@@ -1,27 +1,32 @@
 from telas.tela_clinica import TelaClinica
 from models.clinica import Clinica
-
+from daos.clinica_dao import ClinicaDAO
 
 class ControladorClinica:
   def __init__(self, controlador_sistema, tela=None):
-    self.__clinicas = []
+    self.__clinica_dao = ClinicaDAO()
     self.__tela_clinica = tela or TelaClinica()
     self.__controlador_sistema = controlador_sistema
 
   @property
   def clinicas(self):
-    return self.__clinicas
+    return self.__clinica_dao.get_all()
 
   def pega_clinica_por_codigo(self, codigo: int):
-    if 1 <= codigo <= len(self.__clinicas):
-      return self.__clinicas[codigo - 1]
+    clinicas = self.clinicas
+    if 1 <= codigo <= len(clinicas):
+      return clinicas[codigo - 1]
     return None
 
   def pega_clinica_por_nome(self, nome: str):
-    for clinica in self.__clinicas:
+    for clinica in self.clinicas:
       if clinica.nome == nome:
         return clinica
     return None
+
+  def atualizar_persistencia(self):
+    """Garante que modificações em Atendimentos/Procedimentos/Pagamentos salvem as alterações profundas."""
+    self.__clinica_dao.update()
 
   def _dados_clinica(self, codigo: int, clinica: Clinica):
     return {
@@ -49,31 +54,35 @@ class ControladorClinica:
       dados["horario_abertura"],
       dados["horario_fechamento"],
     )
-    self.__clinicas.append(clinica)
-    self.__tela_clinica.mostra_mensagem("Clínica cadastrada com sucesso!")
+    self.__clinica_dao.add(clinica.nome, clinica)
+    self.lista_clinicas()
 
-  def alterar_clinica(self):
-    if not self.__clinicas:
+  def lista_clinicas(self):
+    if not self.clinicas:
       self.__tela_clinica.mostra_mensagem("ATENCAO: Nenhuma clínica cadastrada.")
       return
+    for codigo, clinica in enumerate(self.clinicas, start=1):
+      self.__tela_clinica.mostra_clinica(self._dados_clinica(codigo, clinica))
 
+  def alterar_clinica(self):
+    if not self.clinicas:
+      self.__tela_clinica.mostra_mensagem("ATENCAO: Nenhuma clínica cadastrada.")
+      return
     self.lista_clinicas()
-    codigo = self.__tela_clinica.seleciona_clinica(len(self.__clinicas))
+    codigo = self.__tela_clinica.seleciona_clinica(len(self.clinicas))
     if codigo is None:
       return
     clinica = self.pega_clinica_por_codigo(codigo)
-
     if clinica is None:
       self.__tela_clinica.mostra_mensagem("ATENCAO: Clínica não existente.")
       return
-
     dados = self.__tela_clinica.pega_dados_clinica(
-      nome_disponivel=lambda nome: (
-        nome == clinica.nome or self.pega_clinica_por_nome(nome) is None
-      )
+      nome_disponivel=lambda nome: nome == clinica.nome or self.pega_clinica_por_nome(nome) is None
     )
     if dados is None:
       return
+    
+    nome_antigo = clinica.nome
     clinica.atualizar(
       dados["nome"],
       dados["cidade"],
@@ -81,22 +90,20 @@ class ControladorClinica:
       dados["horario_abertura"],
       dados["horario_fechamento"],
     )
+    if dados["nome"] != nome_antigo:
+      self.__clinica_dao.remove(nome_antigo)
+      self.__clinica_dao.add(clinica.nome, clinica)
+    else:
+      self.__clinica_dao.update()
     self.lista_clinicas()
-
-  def lista_clinicas(self):
-    if not self.__clinicas:
-      self.__tela_clinica.mostra_mensagem("ATENCAO: Nenhuma clínica cadastrada.")
-      return
-    for codigo, clinica in enumerate(self.__clinicas, start=1):
-      self.__tela_clinica.mostra_clinica(self._dados_clinica(codigo, clinica))
 
   def excluir_clinica(self):
-    if not self.__clinicas:
+    if not self.clinicas:
       self.__tela_clinica.mostra_mensagem("ATENCAO: Nenhuma clínica cadastrada.")
       return
 
     self.lista_clinicas()
-    codigo = self.__tela_clinica.seleciona_clinica(len(self.__clinicas))
+    codigo = self.__tela_clinica.seleciona_clinica(len(self.clinicas))
     if codigo is None:
       return
     clinica = self.pega_clinica_por_codigo(codigo)
@@ -111,7 +118,7 @@ class ControladorClinica:
       )
       return
 
-    self.__clinicas.remove(clinica)
+    self.__clinica_dao.remove(clinica.nome)
     self.__tela_clinica.mostra_mensagem("Clínica excluída com sucesso!")
     self.lista_clinicas()
 
@@ -126,6 +133,6 @@ class ControladorClinica:
       4: self.excluir_clinica,
       0: self.retornar,
     }
-
     while True:
-      lista_opcoes[self.__tela_clinica.tela_opcoes()]()
+      opcao = self.__tela_clinica.tela_opcoes()
+      lista_opcoes[opcao]()
