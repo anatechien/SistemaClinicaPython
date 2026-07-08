@@ -19,12 +19,15 @@ class ControladorPacientes:
 
   def _dados_paciente(self, paciente: Paciente):
     responsavel_str = f" (Acomp.: {paciente.responsavel})" if paciente.responsavel else ""
-    return {
+    dados = {
       "nome": paciente.nome + responsavel_str,
       "celular": paciente.celular,
       "cpf": paciente.cpf,
       "data_nascimento": paciente.data_nascimento.strftime("%d/%m/%Y"),
     }
+    if paciente.responsavel:
+      dados["responsavel"] = paciente.responsavel
+    return dados
 
   def _garantir_cpf_disponivel(self, cpf: str, cpf_atual: str = None):
     if self.pega_paciente_por_cpf(cpf) is not None and cpf != cpf_atual:
@@ -111,9 +114,12 @@ class ControladorPacientes:
           paciente.cpf = dados["cpf"]
           self.__paciente_dao.remove(cpf_antigo)
           self.__paciente_dao.add(paciente.cpf, paciente)
+          self.__controlador_sistema.controlador_clinica.atualizar_chave_paciente(
+            cpf_antigo, paciente.cpf
+          )
         else:
           self.__paciente_dao.update()
-          
+
         self.lista_pacientes()
         break
       except (PacienteRepetidoException, PacienteMenorDeIdadeException) as erro:
@@ -138,7 +144,16 @@ class ControladorPacientes:
         return
       paciente = self.pega_paciente_por_cpf(cpf)
       if paciente is not None:
+        atendimentos = self.__controlador_sistema.controlador_atendimentos._todos_atendimentos()
+        for atendimento in atendimentos:
+          if atendimento.paciente_cpf == cpf:
+            self.__tela_paciente.mostra_mensagem(
+              "ATENCAO: Não é possível excluir um paciente que possui atendimentos agendados!"
+            )
+            return
+
         self.__paciente_dao.remove(paciente.cpf)
+        self.__tela_paciente.mostra_mensagem("Paciente excluído com sucesso!")
         self.lista_pacientes()
         return
       self.__tela_paciente.mostra_mensagem("ATENCAO: Paciente não existente. Tente novamente.")

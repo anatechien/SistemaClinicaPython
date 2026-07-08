@@ -1,9 +1,14 @@
+import os
 import pickle
 from abc import ABC
 
+_DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+
+
 class DAO(ABC):
     def __init__(self, datasource=""):
-        self.__datasource = datasource
+        os.makedirs(_DATA_DIR, exist_ok=True)
+        self.__datasource = os.path.join(_DATA_DIR, datasource)
         self.__cache = {}
         self.load()
 

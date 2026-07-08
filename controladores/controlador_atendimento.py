@@ -190,7 +190,7 @@ class ControladorAtendimentos:
         tipo = self.__controlador_sistema.controlador_tipos_atendimento.pega_tipo_por_nome(
           dados["nome_tipo"]
         )
-        Atendimento(
+        atendimento = Atendimento(
           clinica,
           paciente,
           profissional,
@@ -200,6 +200,7 @@ class ControladorAtendimentos:
           tipo,
           dados["valor"],
         )
+        atendimento.vincular_resolver(self.__controlador_sistema.resolver)
         self.__controlador_sistema.controlador_clinica.atualizar_persistencia()
         self.__tela_atendimento.mostra_mensagem("Atendimento agendado com sucesso!")
         self.lista_atendimentos()

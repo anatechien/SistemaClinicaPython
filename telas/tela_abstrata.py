@@ -61,7 +61,7 @@ class TelaAbstrata(ABC):
 
   def le_data_nascimento_paciente(
     self,
-    mensagem="Data de nascimento (DD/MM/AAAA) - paciente deve ser maior de 18 anos: ",
+    mensagem="Data de nascimento (DD/MM/AAAA): ",
   ):
     while True:
       data = self.le_data(mensagem)
@@ -70,6 +70,22 @@ class TelaAbstrata(ABC):
         return data
       except PacienteMenorDeIdadeException as erro:
         print(erro)
+
+  def le_data_nascimento_com_responsavel(
+    self,
+    mensagem="Data de nascimento (DD/MM/AAAA): ",
+  ):
+    while True:
+      data = self.le_data(mensagem)
+      try:
+        validar_maior_idade(data)
+        return data, None
+      except PacienteMenorDeIdadeException:
+        print("Paciente menor de idade. Informe o responsável legal.")
+        responsavel = self.le_texto("Nome do responsável: ")
+        if responsavel:
+          return data, responsavel
+        print("Responsável obrigatório para menor de idade. Tente novamente.")
 
   def le_horario(self, mensagem=" "):
     while True:

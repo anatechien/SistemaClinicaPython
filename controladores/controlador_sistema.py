@@ -4,6 +4,7 @@ from controladores.controlador_pacientes import ControladorPacientes
 from controladores.controlador_profissionais import ControladorProfissionais
 from controladores.controlador_relatorios import ControladorRelatorios
 from controladores.controlador_tipos_atendimento import ControladorTiposAtendimento
+from models.referencias import ResolvedorReferencias
 from telas.tela_sistema import TelaSistema
 
 
@@ -19,6 +20,23 @@ class ControladorSistema:
     )
     self.__controlador_atendimentos = ControladorAtendimentos(self, telas.get("atendimento"))
     self.__controlador_relatorios = ControladorRelatorios(self, telas.get("relatorio"))
+    self.__vincular_referencias()
+
+  def __vincular_referencias(self):
+    resolver = ResolvedorReferencias(
+      self.__controlador_pacientes.pega_paciente_por_cpf,
+      self.__controlador_profissionais.pega_profissional_por_cpf,
+      self.__controlador_tipos_atendimento.pega_tipo_por_nome,
+    )
+    self.__controlador_clinica.vincular_referencias(resolver)
+
+  @property
+  def resolver(self):
+    return ResolvedorReferencias(
+      self.__controlador_pacientes.pega_paciente_por_cpf,
+      self.__controlador_profissionais.pega_profissional_por_cpf,
+      self.__controlador_tipos_atendimento.pega_tipo_por_nome,
+    )
 
   @property
   def controlador_clinica(self):

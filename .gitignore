@@ -207,6 +207,7 @@ tempCodeRunnerFile.py
 /SistemaClinicaPython-main/
 
 # Dados de persistência local
+data/
 *.pkl
 
 # Ruff stuff:

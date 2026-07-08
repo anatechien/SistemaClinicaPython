@@ -24,9 +24,41 @@ class ControladorClinica:
         return clinica
     return None
 
+  def vincular_referencias(self, resolver):
+    for clinica in self.clinicas:
+      for atendimento in clinica.atendimentos:
+        atendimento.migrar_se_necessario()
+        atendimento.vincular_resolver(resolver)
+
   def atualizar_persistencia(self):
-    """Garante que modificações em Atendimentos/Procedimentos/Pagamentos salvem as alterações profundas."""
     self.__clinica_dao.update()
+
+  def atualizar_chave_paciente(self, cpf_antigo: str, cpf_novo: str):
+    for clinica in self.clinicas:
+      for atendimento in clinica.atendimentos:
+        if atendimento.paciente_cpf == cpf_antigo:
+          atendimento.atualizar_chave_paciente(cpf_novo)
+        for pagamento in atendimento.pagamentos:
+          if pagamento.paciente_cpf == cpf_antigo:
+            pagamento.atualizar_chave_paciente(cpf_novo)
+    self.atualizar_persistencia()
+
+  def atualizar_chave_profissional(self, cpf_antigo: str, cpf_novo: str):
+    for clinica in self.clinicas:
+      for atendimento in clinica.atendimentos:
+        if atendimento.profissional_cpf == cpf_antigo:
+          atendimento.atualizar_chave_profissional(cpf_novo)
+        for procedimento in atendimento.procedimentos:
+          if procedimento.profissional_cpf == cpf_antigo:
+            procedimento.atualizar_chave_profissional(cpf_novo)
+    self.atualizar_persistencia()
+
+  def atualizar_chave_tipo(self, nome_antigo: str, nome_novo: str):
+    for clinica in self.clinicas:
+      for atendimento in clinica.atendimentos:
+        if atendimento.tipo_nome == nome_antigo:
+          atendimento.atualizar_chave_tipo(nome_novo)
+    self.atualizar_persistencia()
 
   def _dados_clinica(self, codigo: int, clinica: Clinica):
     return {
@@ -55,6 +87,7 @@ class ControladorClinica:
       dados["horario_fechamento"],
     )
     self.__clinica_dao.add(clinica.nome, clinica)
+    self.__tela_clinica.mostra_mensagem("Clínica cadastrada com sucesso!")
     self.lista_clinicas()
 
   def lista_clinicas(self):
@@ -81,7 +114,7 @@ class ControladorClinica:
     )
     if dados is None:
       return
-    
+
     nome_antigo = clinica.nome
     clinica.atualizar(
       dados["nome"],

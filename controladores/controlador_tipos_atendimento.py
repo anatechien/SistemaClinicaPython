@@ -62,8 +62,12 @@ class ControladorTiposAtendimento:
         if dados["nome"] != nome_antigo:
           self.__tipo_atendimento_dao.remove(nome_antigo)
           self.__tipo_atendimento_dao.add(tipo.nome, tipo)
+          self.__controlador_sistema.controlador_clinica.atualizar_chave_tipo(
+            nome_antigo, tipo.nome
+          )
         else:
           self.__tipo_atendimento_dao.update()
+
         self.lista_tipos()
         break
       except TipoAtendimentoRepetidoException as erro:
@@ -88,7 +92,16 @@ class ControladorTiposAtendimento:
         return
       tipo = self.pega_tipo_por_nome(nome)
       if tipo is not None:
+        atendimentos = self.__controlador_sistema.controlador_atendimentos._todos_atendimentos()
+        for atendimento in atendimentos:
+          if atendimento.tipo_nome == nome:
+            self.__tela_tipo.mostra_mensagem(
+              "ATENCAO: Não é possível excluir um tipo de atendimento vinculado a consultas existentes!"
+            )
+            return
+
         self.__tipo_atendimento_dao.remove(tipo.nome)
+        self.__tela_tipo.mostra_mensagem("Tipo de atendimento excluído com sucesso!")
         self.lista_tipos()
         return
       self.__tela_tipo.mostra_mensagem("ATENCAO: Tipo de atendimento não existente. Tente novamente.")

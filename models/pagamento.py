@@ -3,7 +3,6 @@ from datetime import date
 from exceptions.pagamento_dados_invalidos_exception import PagamentoDadosInvalidosException
 from exceptions.pagamento_fora_do_prazo_exception import PagamentoForaDoPrazoException
 from models.atendimento import Atendimento
-from models.paciente import Paciente
 
 
 def validar_data_pagamento(data_pagamento: date, atendimento: Atendimento):
@@ -15,16 +14,24 @@ def validar_data_pagamento(data_pagamento: date, atendimento: Atendimento):
 
 
 class Pagamento:
-  def __init__(self, data: date, atendimento: Atendimento, paciente: Paciente, valor: float):
+  def __init__(self, data: date, atendimento: Atendimento, paciente, valor: float):
     if valor <= 0:
       raise ValueError("O valor do pagamento deve ser maior que zero.")
     validar_data_pagamento(data, atendimento)
 
     self.__data = data
     self.__atendimento = atendimento
-    self.__paciente = paciente
+    self.__paciente_cpf = paciente.cpf if hasattr(paciente, "cpf") else paciente
     self.__valor = valor
     atendimento.registrar_pagamento(self)
+
+  def migrar_se_necessario(self):
+    if hasattr(self, "_Pagamento__paciente"):
+      self.__paciente_cpf = self._Pagamento__paciente.cpf
+      del self._Pagamento__paciente
+
+  def vincular_resolver(self, atendimento: Atendimento):
+    self.__atendimento = atendimento
 
   @property
   def data(self):
@@ -35,12 +42,19 @@ class Pagamento:
     return self.__atendimento
 
   @property
+  def paciente_cpf(self):
+    return self.__paciente_cpf
+
+  @property
   def paciente(self):
-    return self.__paciente
+    return self.__atendimento.obter_paciente(self.__paciente_cpf)
 
   @property
   def valor(self):
     return self.__valor
+
+  def atualizar_chave_paciente(self, cpf_novo: str):
+    self.__paciente_cpf = cpf_novo
 
   def _validar_atualizacao(self, data: date, valor: float):
     if valor <= 0:
@@ -66,7 +80,7 @@ class PagamentoPix(Pagamento):
     self,
     data: date,
     atendimento: Atendimento,
-    paciente: Paciente,
+    paciente,
     valor: float,
     cpf_pagador: str,
   ):
@@ -97,7 +111,7 @@ class PagamentoCartaoCredito(Pagamento):
     self,
     data: date,
     atendimento: Atendimento,
-    paciente: Paciente,
+    paciente,
     valor: float,
     numero_cartao: str,
     bandeira: str,
@@ -138,6 +152,6 @@ class PagamentoCartaoCredito(Pagamento):
   def __str__(self):
     return (
       f"Pagamento com cartão {self.bandeira} "
-      f"(****{self.numero_cartao[-4:]}) de R$ {self.valor:.2f} "
+      f"(****{self.__numero_cartao[-4:]}) de R$ {self.valor:.2f} "
       f"em {self.data.strftime('%d/%m/%Y')}"
     )

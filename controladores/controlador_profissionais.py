@@ -80,8 +80,12 @@ class ControladorProfissionais:
           profissional.cpf = dados["cpf"]
           self.__profissional_dao.remove(cpf_antigo)
           self.__profissional_dao.add(profissional.cpf, profissional)
+          self.__controlador_sistema.controlador_clinica.atualizar_chave_profissional(
+            cpf_antigo, profissional.cpf
+          )
         else:
           self.__profissional_dao.update()
+
         self.lista_profissionais()
         break
       except ProfissionalRepetidoException as erro:
@@ -106,7 +110,22 @@ class ControladorProfissionais:
         return
       profissional = self.pega_profissional_por_cpf(cpf)
       if profissional is not None:
+        atendimentos = self.__controlador_sistema.controlador_atendimentos._todos_atendimentos()
+        for atendimento in atendimentos:
+          if atendimento.profissional_cpf == cpf:
+            self.__tela_profissional.mostra_mensagem(
+              "ATENCAO: Não é possível excluir um profissional com atendimentos agendados!"
+            )
+            return
+          for procedimento in atendimento.procedimentos:
+            if procedimento.profissional_cpf == cpf:
+              self.__tela_profissional.mostra_mensagem(
+                "ATENCAO: Não é possível excluir um profissional associado a procedimentos executados!"
+              )
+              return
+
         self.__profissional_dao.remove(profissional.cpf)
+        self.__tela_profissional.mostra_mensagem("Profissional excluído com sucesso!")
         self.lista_profissionais()
         return
       self.__tela_profissional.mostra_mensagem("ATENCAO: Profissional não existente. Tente novamente.")
